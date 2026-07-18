@@ -42,3 +42,11 @@ jobs:
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           VACACIONES_SHEET_CSV_URL: ${{ secrets.VACACIONES_SHEET_CSV_URL }}
         run: python fichar.py ${{ steps.evento.outputs.evento }} ${{ github.event_name == 'workflow_dispatch' && 'now' || '' }}
+
+      - name: Subir capturas de depuración
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-debug
+          path: debug_*.png
+          if-no-files-found: ignore
