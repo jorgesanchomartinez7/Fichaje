@@ -1,4 +1,4 @@
-name: Autofichaje netTime
+ name: Autofichaje netTime
 
 on:
   schedule:
@@ -44,4 +44,5 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
-        run: python fichar.py ${{ steps.evento.outputs.evento }}
+          VACACIONES_SHEET_CSV_URL: ${{ secrets.VACACIONES_SHEET_CSV_URL }}
+        run: python fichar.py ${{ steps.evento.outputs.evento }} ${{ github.event_name == 'workflow_dispatch' && 'now' || '' }}
