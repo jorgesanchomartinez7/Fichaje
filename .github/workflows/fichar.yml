@@ -1,15 +1,11 @@
- name: Autofichaje netTime
+name: Autofichaje netTime
 
 on:
   schedule:
-    # Entrada: L-V, dispara a las 05:55 UTC (cubre invierno y verano), el script
-    # espera internamente hasta las 08:00 hora de Madrid.
     - cron: "55 5 * * 1-5"
-    # Salida L-J: dispara a las 14:55 UTC, el script espera hasta las 17:00 Madrid.
     - cron: "55 14 * * 1-4"
-    # Salida Viernes: dispara a las 11:55 UTC, el script espera hasta las 14:00 Madrid.
     - cron: "55 11 * * 5"
-  workflow_dispatch: {} # permite lanzarlo a mano para probar
+  workflow_dispatch: {}
 
 jobs:
   fichar:
