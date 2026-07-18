@@ -1,0 +1,47 @@
+name: Autofichaje netTime
+
+on:
+  schedule:
+    # Entrada: L-V, dispara a las 05:55 UTC (cubre invierno y verano), el script
+    # espera internamente hasta las 08:00 hora de Madrid.
+    - cron: "55 5 * * 1-5"
+    # Salida L-J: dispara a las 14:55 UTC, el script espera hasta las 17:00 Madrid.
+    - cron: "55 14 * * 1-4"
+    # Salida Viernes: dispara a las 11:55 UTC, el script espera hasta las 14:00 Madrid.
+    - cron: "55 11 * * 5"
+  workflow_dispatch: {} # permite lanzarlo a mano para probar
+
+jobs:
+  fichar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Determinar evento (entrada/salida) según la hora del disparo
+        id: evento
+        run: |
+          hora_utc=$(date -u +%H)
+          if [ "$hora_utc" == "05" ]; then
+            echo "evento=entrada" >> "$GITHUB_OUTPUT"
+          else
+            echo "evento=salida" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fichar
+        env:
+          NETTIME_URL: ${{ secrets.NETTIME_URL }}
+          NETTIME_USER: ${{ secrets.NETTIME_USER }}
+          NETTIME_PASS: ${{ secrets.NETTIME_PASS }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python fichar.py ${{ steps.evento.outputs.evento }}
