@@ -115,6 +115,7 @@ def fichar():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.goto(NETTIME_URL)
+        page.screenshot(path="debug_1_login.png")
 
         # --- Login: usuario = primer input que no es de tipo password ---
         page.locator('input:not([type="password"])').first.fill(NETTIME_USER)
@@ -123,18 +124,31 @@ def fichar():
 
         # Esperar a que cargue el panel principal ("Marcaje remoto")
         page.wait_for_selector("text=Marcaje remoto", timeout=20000)
+        page.screenshot(path="debug_2_panel.png")
 
         # Abrir el desplegable de "Incidencia" y confirmar "Sin incidencia"
         page.locator("text=Sin incidencia").first.click()
         page.wait_for_timeout(800)
-        page.get_by_text("Sin incidencia", exact=True).last.click()
+        page.screenshot(path="debug_3_desplegable_abierto.png")
+
+        try:
+            page.get_by_text("Sin incidencia", exact=True).last.click(timeout=5000)
+        except Exception as e:
+            print(f"Aviso: no se pudo confirmar 'Sin incidencia' desde la lista: {e}")
+            page.keyboard.press("Escape")
+
         page.wait_for_timeout(500)
+        page.screenshot(path="debug_4_antes_de_marcar.png")
 
         # Marcar (el botón alterna solo entre entrada y salida)
-        page.get_by_role("button", name="Marcar").click()
+        try:
+            page.get_by_role("button", name="Marcar").click(timeout=5000)
+        except Exception as e:
+            print(f"Aviso: no se pudo hacer clic en 'Marcar': {e}")
         # -------------------------------------------------------------
 
         page.wait_for_timeout(3000)
+        page.screenshot(path="debug_5_final.png")
         browser.close()
 
 
