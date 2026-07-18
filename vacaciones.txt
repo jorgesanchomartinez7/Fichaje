@@ -1,0 +1,4 @@
+# Añade aquí tus días de vacaciones o ausencias, uno por línea, formato YYYY-MM-DD
+# Todo lo que va después de "#" es un comentario y se ignora.
+# Ejemplo:
+# 2026-08-03 # semana en la playa
