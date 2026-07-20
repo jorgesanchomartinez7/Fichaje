@@ -2,10 +2,19 @@ name: Autofichaje netTime
 
 on:
   schedule:
-    - cron: "55 5 * * 1-5"
-    - cron: "55 14 * * 1-4"
-    - cron: "55 11 * * 5"
-  workflow_dispatch: {}
+    # Cada 10 min, de 5:00 a 16:59 UTC, L-V. Cubre entrada (8:00 Madrid) y
+    # salida (17:00/14:00 Madrid) tanto en horario de invierno como de verano.
+    - cron: "*/10 5-16 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      evento:
+        description: "Evento a probar manualmente"
+        required: false
+        default: "salida"
+        type: choice
+        options:
+          - entrada
+          - salida
 
 jobs:
   fichar:
@@ -17,22 +26,33 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Decidir si toca fichar ahora
+        id: decidir
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            evento="${{ inputs.evento }}"
+          else
+            evento=$(python decidir.py)
+          fi
+          echo "evento=$evento" >> "$GITHUB_OUTPUT"
+          echo "fecha=$(TZ=Europe/Madrid date +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Comprobar si ya se fichó hoy ese evento
+        if: steps.decidir.outputs.evento != 'none' && github.event_name == 'schedule'
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: marcador.txt
+          key: marcado-${{ steps.decidir.outputs.fecha }}-${{ steps.decidir.outputs.evento }}
+
       - name: Instalar dependencias
+        if: steps.decidir.outputs.evento != 'none' && (github.event_name == 'workflow_dispatch' || steps.cache.outputs.cache-hit != 'true')
         run: |
           pip install playwright
           playwright install --with-deps chromium
 
-      - name: Determinar evento (entrada/salida) según la hora del disparo
-        id: evento
-        run: |
-          hora_utc=$(date -u +%H)
-          if [ "$hora_utc" == "05" ]; then
-            echo "evento=entrada" >> "$GITHUB_OUTPUT"
-          else
-            echo "evento=salida" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Fichar
+        if: steps.decidir.outputs.evento != 'none' && (github.event_name == 'workflow_dispatch' || steps.cache.outputs.cache-hit != 'true')
         env:
           NETTIME_URL: ${{ secrets.NETTIME_URL }}
           NETTIME_USER: ${{ secrets.NETTIME_USER }}
@@ -41,7 +61,9 @@ jobs:
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           VACACIONES_SHEET_CSV_URL: ${{ secrets.VACACIONES_SHEET_CSV_URL }}
-        run: python fichar.py ${{ steps.evento.outputs.evento }} ${{ github.event_name == 'workflow_dispatch' && 'now' || '' }}
+        run: |
+          python fichar.py ${{ steps.decidir.outputs.evento }}
+          echo "hecho" > marcador.txt
 
       - name: Subir capturas de depuración
         if: always()
