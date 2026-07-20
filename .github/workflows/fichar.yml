@@ -4,7 +4,7 @@ on:
   schedule:
     # Cada 10 min, de 5:00 a 16:59 UTC, L-V. Cubre entrada (8:00 Madrid) y
     # salida (17:00/14:00 Madrid) tanto en horario de invierno como de verano.
-    - cron: "*/10 5-16 * * 1-5"
+    - cron: "3-59/10 5-16 * * 1-5"
   workflow_dispatch:
     inputs:
       evento:
