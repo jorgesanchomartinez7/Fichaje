@@ -108,27 +108,10 @@ def fichar():
         page.wait_for_selector("text=Marcaje remoto", timeout=20000)
         page.screenshot(path="debug_2_panel.png")
 
-        # Abrir el desplegable de "Incidencia" (usamos la clase exacta del
-        # cuadro, .ib-value, porque el texto "Sin incidencia" aparece
-        # también en "Estado actual" y hacía clic en el sitio equivocado)
-        page.locator(".ib-value").first.click()
-        page.wait_for_timeout(800)
-        page.screenshot(path="debug_3_desplegable_abierto.png")
-
-        try:
-            buscador = page.get_by_placeholder("Buscar...")
-            buscador.click(timeout=5000)
-            buscador.fill("Sin incidencia")
-            page.wait_for_timeout(500)
-            page.keyboard.press("Enter")
-        except Exception as e:
-            print(f"Aviso: no se pudo confirmar 'Sin incidencia' con el buscador: {e}")
-            page.keyboard.press("Escape")
-
-        # Cerrar el desplegable haciendo clic en un sitio neutral, para que
-        # no se quede abierto tapando el botón "Marcar"
-        page.keyboard.press("Escape")
-        page.locator("text=Marcaje remoto").click()
+        # NOTA: la incidencia ya viene por defecto en "Sin incidencia" al
+        # entrar, así que no hace falta tocar el desplegable (tocarlo estaba
+        # provocando que se abrieran otras ventanas de la aplicación por
+        # encima, bloqueando los siguientes clics).
         page.wait_for_timeout(500)
         page.screenshot(path="debug_4_antes_de_marcar.png")
 
