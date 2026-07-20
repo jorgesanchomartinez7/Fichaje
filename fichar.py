@@ -121,11 +121,8 @@ def fichar():
         page.wait_for_timeout(500)
         page.screenshot(path="debug_4_antes_de_marcar.png")
 
-        # Marcar (el botón alterna solo entre entrada y salida)
-        try:
-            page.get_by_role("button", name="Marcar").click(timeout=5000)
-        except Exception as e:
-            print(f"Aviso: no se pudo hacer clic en 'Marcar': {e}")
+# Marcar (el botón alterna solo entre entrada y salida)
+        page.get_by_role("button", name="Marcar").click(timeout=10000)
         # -------------------------------------------------------------
 
         page.wait_for_timeout(3000)
