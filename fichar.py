@@ -107,10 +107,25 @@ def fichar():
         page.wait_for_selector("text=Marcaje remoto", timeout=20000)
         page.screenshot(path="debug_2_panel.png")
 
-        # Abrir el desplegable de "Incidencia" y confirmar "Sin incidencia"
+# Abrir el desplegable de "Incidencia" y confirmar "Sin incidencia"
+        # usando el buscador + teclado (más fiable que hacer clic en la
+        # lista, que a veces queda tapada por los gráficos de saldo)
         page.locator("text=Sin incidencia").first.click()
         page.wait_for_timeout(800)
         page.screenshot(path="debug_3_desplegable_abierto.png")
+
+        try:
+            buscador = page.get_by_placeholder("Buscar...")
+            buscador.click(timeout=5000)
+            buscador.fill("Sin incidencia")
+            page.wait_for_timeout(500)
+            page.keyboard.press("Enter")
+        except Exception as e:
+            print(f"Aviso: no se pudo confirmar 'Sin incidencia' con el buscador: {e}")
+            page.keyboard.press("Escape")
+
+        page.wait_for_timeout(500)
+        page.screenshot(path="debug_4_antes_de_marcar.png")
 
         try:
             page.get_by_text("Sin incidencia", exact=True).last.click(timeout=5000)
