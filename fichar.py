@@ -107,10 +107,10 @@ def fichar():
         page.wait_for_selector("text=Marcaje remoto", timeout=20000)
         page.screenshot(path="debug_2_panel.png")
 
-# Abrir el desplegable de "Incidencia" y confirmar "Sin incidencia"
-        # usando el buscador + teclado (más fiable que hacer clic en la
-        # lista, que a veces queda tapada por los gráficos de saldo)
-        page.locator("text=Sin incidencia").first.click()
+# Abrir el desplegable de "Incidencia" (usamos la clase exacta del
+        # cuadro, .ib-value, porque el texto "Sin incidencia" aparece
+        # también en "Estado actual" y hacía clic en el sitio equivocado)
+        page.locator(".ib-value").first.click()
         page.wait_for_timeout(800)
         page.screenshot(path="debug_3_desplegable_abierto.png")
 
@@ -122,15 +122,6 @@ def fichar():
             page.keyboard.press("Enter")
         except Exception as e:
             print(f"Aviso: no se pudo confirmar 'Sin incidencia' con el buscador: {e}")
-            page.keyboard.press("Escape")
-
-        page.wait_for_timeout(500)
-        page.screenshot(path="debug_4_antes_de_marcar.png")
-
-        try:
-            page.get_by_text("Sin incidencia", exact=True).last.click(timeout=5000)
-        except Exception as e:
-            print(f"Aviso: no se pudo confirmar 'Sin incidencia' desde la lista: {e}")
             page.keyboard.press("Escape")
 
         page.wait_for_timeout(500)
