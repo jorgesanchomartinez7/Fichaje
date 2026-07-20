@@ -5,19 +5,17 @@ Autofichaje netTime + aviso por email en cada fichaje y en días de excepción.
 Uso:
     python fichar.py entrada
     python fichar.py salida
-    python fichar.py entrada now   # modo prueba: salta la espera y la comprobación de excepción
 
 El script:
-  1. Calcula la hora actual en Europe/Madrid (gestiona el cambio de hora solo).
-  2. Si hoy es festivo (festivos.py) o vacaciones (vacaciones.txt y/o Google Sheet),
+  1. Si hoy es festivo (festivos.py) o vacaciones (vacaciones.txt y/o Google Sheet),
      NO ficha y (solo en la ejecución "entrada") manda un email avisando.
-  3. Si no, espera hasta la hora exacta objetivo, ficha en netTime, y manda un
-     email confirmando que se ha fichado.
+  2. Si no, ficha en netTime y manda un email confirmando que se ha fichado.
+
+(El cuándo lanzarlo lo decide decidir.py + el workflow, este script ya no espera.)
 """
 
 import os
 import sys
-import time
 import smtplib
 import urllib.request
 from datetime import datetime, date
@@ -93,23 +91,6 @@ def enviar_email(asunto: str, cuerpo: str):
         server.send_message(msg)
 
 
-def hora_objetivo(evento: str, hoy: date) -> datetime:
-    """Devuelve el datetime (Madrid) al que hay que fichar hoy."""
-    es_viernes = hoy.weekday() == 4  # lunes=0 ... viernes=4
-    if evento == "entrada":
-        h, m = 8, 0
-    else:  # salida
-        h, m = (14, 0) if es_viernes else (17, 0)
-    return datetime.combine(hoy, datetime.min.time(), tzinfo=MADRID).replace(hour=h, minute=m)
-
-
-def esperar_hasta(objetivo: datetime):
-    ahora = datetime.now(MADRID)
-    segundos = (objetivo - ahora).total_seconds()
-    if segundos > 0:
-        time.sleep(min(segundos, 90 * 60))  # margen: nunca más de 90 min
-
-
 def fichar():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -153,27 +134,22 @@ def fichar():
 
 
 def main():
-    if len(sys.argv) not in (2, 3) or sys.argv[1] not in ("entrada", "salida"):
-        print("Uso: python fichar.py [entrada|salida] [now]")
+    if len(sys.argv) != 2 or sys.argv[1] not in ("entrada", "salida"):
+        print("Uso: python fichar.py [entrada|salida]")
         sys.exit(1)
 
     evento = sys.argv[1]
-    modo_prueba = len(sys.argv) == 3 and sys.argv[2] == "now"
     hoy = datetime.now(MADRID).date()
 
-    if not modo_prueba:
-        excepcion = es_dia_excepcion(hoy)
-        if excepcion:
-            if evento == "entrada":
-                enviar_email(
-                    f"netTime: hoy no ficho ({excepcion})",
-                    f"Hoy {hoy.isoformat()} es {excepcion}, así que no se va a fichar automáticamente.",
-                )
-            print(f"Día de excepción ({excepcion}), no se ficha.")
-            return
-
-        objetivo = hora_objetivo(evento, hoy)
-        esperar_hasta(objetivo)
+    excepcion = es_dia_excepcion(hoy)
+    if excepcion:
+        if evento == "entrada":
+            enviar_email(
+                f"netTime: hoy no ficho ({excepcion})",
+                f"Hoy {hoy.isoformat()} es {excepcion}, así que no se va a fichar automáticamente.",
+            )
+        print(f"Día de excepción ({excepcion}), no se ficha.")
+        return
 
     try:
         fichar()
@@ -189,7 +165,7 @@ def main():
         f"netTime: {evento} fichada ✅",
         f"Fichaje de {evento} realizado correctamente a las {hora_actual} del {hoy.isoformat()}.",
     )
-    print(f"Fichaje de {evento} realizado a las {datetime.now(MADRID)} (modo_prueba={modo_prueba})")
+    print(f"Fichaje de {evento} realizado a las {datetime.now(MADRID)}")
 
 
 if __name__ == "__main__":
