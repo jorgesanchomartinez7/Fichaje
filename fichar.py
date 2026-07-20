@@ -16,6 +16,7 @@ El script:
 
 import os
 import sys
+import time
 import smtplib
 import urllib.request
 from datetime import datetime, date
@@ -107,14 +108,14 @@ def fichar():
         page.wait_for_selector("text=Marcaje remoto", timeout=20000)
         page.screenshot(path="debug_2_panel.png")
 
-# Abrir el desplegable de "Incidencia" (usamos la clase exacta del
+        # Abrir el desplegable de "Incidencia" (usamos la clase exacta del
         # cuadro, .ib-value, porque el texto "Sin incidencia" aparece
         # también en "Estado actual" y hacía clic en el sitio equivocado)
         page.locator(".ib-value").first.click()
         page.wait_for_timeout(800)
         page.screenshot(path="debug_3_desplegable_abierto.png")
 
-try:
+        try:
             buscador = page.get_by_placeholder("Buscar...")
             buscador.click(timeout=5000)
             buscador.fill("Sin incidencia")
@@ -131,7 +132,7 @@ try:
         page.wait_for_timeout(500)
         page.screenshot(path="debug_4_antes_de_marcar.png")
 
-# Marcar (el botón alterna solo entre entrada y salida)
+        # Marcar (el botón alterna solo entre entrada y salida)
         page.get_by_role("button", name="Marcar").click(timeout=10000)
         # -------------------------------------------------------------
 
