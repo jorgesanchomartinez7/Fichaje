@@ -114,7 +114,7 @@ def fichar():
         page.wait_for_timeout(800)
         page.screenshot(path="debug_3_desplegable_abierto.png")
 
-        try:
+try:
             buscador = page.get_by_placeholder("Buscar...")
             buscador.click(timeout=5000)
             buscador.fill("Sin incidencia")
@@ -124,6 +124,10 @@ def fichar():
             print(f"Aviso: no se pudo confirmar 'Sin incidencia' con el buscador: {e}")
             page.keyboard.press("Escape")
 
+        # Cerrar el desplegable haciendo clic en un sitio neutral, para que
+        # no se quede abierto tapando el botón "Marcar"
+        page.keyboard.press("Escape")
+        page.locator("text=Marcaje remoto").click()
         page.wait_for_timeout(500)
         page.screenshot(path="debug_4_antes_de_marcar.png")
 
