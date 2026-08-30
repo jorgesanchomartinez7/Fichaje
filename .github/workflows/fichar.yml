@@ -1,14 +1,18 @@
 name: Autofichaje netTime
 
 on:
-  schedule:
-    # Cada 10 min, de 5:00 a 16:59 UTC, L-V. Cubre entrada (8:00 Madrid) y
-    # salida (17:00/14:00 Madrid) tanto en horario de invierno como de verano.
-    - cron: "3-59/10 5-16 * * 1-5"
   workflow_dispatch:
     inputs:
+      modo:
+        description: "auto = deja que decida solo (usado por EasyCron); manual = fuerza el evento indicado abajo, para pruebas"
+        required: false
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - manual
       evento:
-        description: "Evento a probar manualmente"
+        description: "Solo si modo=manual: evento a probar"
         required: false
         default: "salida"
         type: choice
@@ -29,7 +33,7 @@ jobs:
       - name: Decidir si toca fichar ahora
         id: decidir
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          if [ "${{ inputs.modo }}" == "manual" ]; then
             evento="${{ inputs.evento }}"
           else
             evento=$(python decidir.py)
@@ -38,7 +42,7 @@ jobs:
           echo "fecha=$(TZ=Europe/Madrid date +%F)" >> "$GITHUB_OUTPUT"
 
       - name: Comprobar si ya se fichó hoy ese evento
-        if: steps.decidir.outputs.evento != 'none' && github.event_name == 'schedule'
+        if: steps.decidir.outputs.evento != 'none' && inputs.modo != 'manual'
         id: cache
         uses: actions/cache@v4
         with:
@@ -46,13 +50,13 @@ jobs:
           key: marcado-${{ steps.decidir.outputs.fecha }}-${{ steps.decidir.outputs.evento }}
 
       - name: Instalar dependencias
-        if: steps.decidir.outputs.evento != 'none' && (github.event_name == 'workflow_dispatch' || steps.cache.outputs.cache-hit != 'true')
+        if: steps.decidir.outputs.evento != 'none' && (inputs.modo == 'manual' || steps.cache.outputs.cache-hit != 'true')
         run: |
           pip install playwright
           playwright install --with-deps chromium
 
       - name: Fichar
-        if: steps.decidir.outputs.evento != 'none' && (github.event_name == 'workflow_dispatch' || steps.cache.outputs.cache-hit != 'true')
+        if: steps.decidir.outputs.evento != 'none' && (inputs.modo == 'manual' || steps.cache.outputs.cache-hit != 'true')
         env:
           NETTIME_URL: ${{ secrets.NETTIME_URL }}
           NETTIME_USER: ${{ secrets.NETTIME_USER }}
